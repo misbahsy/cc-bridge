@@ -1,0 +1,64 @@
+{
+  "agents": {
+    "list": [
+      {
+        "id": "main",
+        "name": "Main Assistant",
+        "workspace": "~/claude-workspace",
+        "model": "claude-sonnet-4-5",
+        "systemPrompt": "You are a helpful assistant."
+      },
+      {
+        "id": "work",
+        "name": "Work Projects",
+        "workspace": "~/projects/work",
+        "model": "claude-opus-4-5"
+      }
+    ]
+  },
+
+  "bindings": [
+    { "agentId": "main" },
+    { "agentId": "work", "match": { "channel": "discord" } },
+    { "agentId": "work", "match": { "channel": "telegram", "peer": "12345" } }
+  ],
+
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "${TELEGRAM_BOT_TOKEN}",
+      "dmPolicy": "pairing",
+      "allowFrom": []
+    },
+    "discord": {
+      "enabled": false,
+      "token": "${DISCORD_BOT_TOKEN}",
+      "dmPolicy": "pairing",
+      "allowFrom": []
+    },
+    "whatsapp": {
+      "enabled": false,
+      "dmPolicy": "pairing",
+      "allowFrom": []
+    }
+  },
+
+  "hooks": {
+    "enabled": false,
+    "bind": "127.0.0.1",
+    "port": 38791,
+    "token": "${WEBHOOK_TOKEN}",
+    "mappings": [
+      {
+        "match": { "path": "gmail" },
+        "agentId": "main",
+        "sessionKey": "hook:gmail:{{payload.messageId}}",
+        "messageTemplate": "New email from {{payload.from}}\nSubject: {{payload.subject}}\n\n{{payload.snippet}}",
+        "deliver": {
+          "channel": "telegram",
+          "to": "12345"
+        }
+      }
+    ]
+  }
+}
