@@ -1,11 +1,19 @@
 {
-  "name": "ccb",
-  "version": "0.1.0",
+  "name": "cc-bridge",
+  "version": "0.1.1",
   "description": "Bridge messaging platforms to Claude Code sessions via the Agent SDK",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
     "ccb": "dist/cli/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/misbahsy/cc-bridge.git"
+  },
+  "homepage": "https://github.com/misbahsy/cc-bridge#readme",
+  "bugs": {
+    "url": "https://github.com/misbahsy/cc-bridge/issues"
   },
   "scripts": {
     "build": "tsc",
@@ -23,7 +31,7 @@
     "ai",
     "agent"
   ],
-  "author": "",
+  "author": "misbahsy",
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.22",

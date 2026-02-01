@@ -1,4 +1,4 @@
-# ccb
+# cc-bridge
 
 Bridge messaging platforms (Telegram, Discord) to Claude Code sessions via the Agent SDK.
 
@@ -6,19 +6,13 @@ Bridge messaging platforms (Telegram, Discord) to Claude Code sessions via the A
 
 ```bash
 # Install
-npm install -g ccb
+npm install -g cc-bridge
 
 # Setup
 ccb setup
 
 # Start
 ccb start
-```
-
-Or use npx:
-
-```bash
-npx create-ccb
 ```
 
 ## ⚠️ IMPORTANT: Terms of Service & Legal Compliance
@@ -111,6 +105,38 @@ If you need multi-user access or want to build applications on Claude:
 - **Pairing security**: Approve new users via CLI
 - **Webhook support**: Receive events from Gmail, GitHub, etc.
 - **Agent routing**: Route different chats to different workspaces
+- **Desktop app**: macOS menu bar app for easy management
+
+## Desktop App (macOS)
+
+A native macOS menu bar app for managing your bridge without the terminal.
+
+### Features
+
+- **Menu bar status**: See bridge status at a glance
+- **One-click start/stop**: Control the bridge from the menu bar
+- **Pairing approvals**: Approve or reject pairing requests with one click
+- **Setup wizard**: Configure Telegram and Discord bots visually
+- **Live logs**: View bridge logs in real-time
+
+### Installation
+
+```bash
+# From the repository
+cd desktop
+npm install
+npm run tauri build
+
+# The .dmg will be in desktop/src-tauri/target/release/bundle/dmg/
+```
+
+### Development
+
+```bash
+cd desktop
+npm install
+npm run tauri dev
+```
 
 ## CLI Commands
 
@@ -245,7 +271,7 @@ curl -X POST http://localhost:38791/hooks/gmail \
 ## Architecture
 
 ```
-Messaging Platforms          ccb              Claude Code
+Messaging Platforms        cc-bridge           Claude Code
 (Telegram, Discord)  ──────►  Session Manager  ──────────►  SDK Sessions
                               │                              │
 Webhooks (Gmail, etc) ──────► Router ──────────────────────► Your Skills

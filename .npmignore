@@ -1,0 +1,33 @@
+# Source files (dist is published)
+src/
+tsconfig.json
+
+# Desktop app (separate distribution)
+desktop/
+
+# Separate packages
+packages/
+
+# Claude Code local settings
+.claude/
+
+# Development files
+*.log
+.DS_Store
+.vscode/
+.idea/
+coverage/
+*.tgz
+
+# Git
+.git/
+.gitignore
+
+# Tests
+**/*.test.ts
+**/*.spec.ts
+vitest.config.*
+
+# Docs (keep README)
+CLAUDE.md
+**/CLAUDE.md

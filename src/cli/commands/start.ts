@@ -19,6 +19,7 @@ import { TelegramAdapter } from "../../adapters/telegram.js";
 import { DiscordAdapter } from "../../adapters/discord.js";
 import { createWebhookServer } from "../../webhooks/server.js";
 import { MessageLogger } from "../../core/logger.js";
+import { createControlAPI } from "../../core/control-api.js";
 import type { Adapter, IncomingMessage, CommandContext, BridgeConfig, ChannelConfig, ChannelType, DmPolicy } from "../../core/types.js";
 
 // Extended adapter interface for multi-bot support
@@ -93,6 +94,32 @@ export async function runStart(options: StartOptions): Promise<void> {
   const adapters = new Map<string, ExtendedAdapter>();
   const spinner = ora();
 
+  // Create shutdown handler (will be set up after all services start)
+  let shutdownHandler: (() => Promise<void>) | undefined;
+
+  // Initialize Control API for desktop app
+  const controlAPI = createControlAPI({
+    config,
+    db,
+    pairingManager,
+    allowlistManager,
+    sessionManager,
+    onStop: async () => {
+      if (shutdownHandler) {
+        await shutdownHandler();
+      }
+    },
+  });
+
+  // Start Control API
+  spinner.start("Starting Control API...");
+  try {
+    await controlAPI.start();
+    spinner.succeed(`Control API: http://127.0.0.1:${controlAPI.getPort()}`);
+  } catch (error) {
+    spinner.fail(`Control API: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
   // Telegram - support both single-bot and multi-bot modes
   if (config.channels.telegram?.enabled) {
     const telegramConfig = config.channels.telegram;
@@ -111,6 +138,14 @@ export async function runStart(options: StartOptions): Promise<void> {
           setupAdapter(telegram, config, sessionManager, pairingManager, allowlistManager, commandParser, adapterConfig, logger);
           await telegram.start();
           adapters.set(`telegram:${botConfig.id}`, telegram);
+          // Update Control API with bot status
+          const existingTelegramStatus = controlAPI['channelStatuses'].get('telegram');
+          controlAPI.updateChannelStatus('telegram', {
+            enabled: true,
+            connected: true,
+            botCount: (existingTelegramStatus?.bots?.length || 0) + 1,
+            bots: [...(existingTelegramStatus?.bots || []), { id: botConfig.id, username: telegram.getBotUsername(), agentId: botConfig.agentId }],
+          });
           spinner.succeed(`Telegram: @${telegram.getBotUsername()} [${botConfig.id}] (ready)`);
         } catch (error) {
           spinner.fail(`Telegram (${botConfig.id}): ${error instanceof Error ? error.message : String(error)}`);
@@ -124,6 +159,12 @@ export async function runStart(options: StartOptions): Promise<void> {
         setupAdapter(telegram, config, sessionManager, pairingManager, allowlistManager, commandParser, undefined, logger);
         await telegram.start();
         adapters.set("telegram", telegram);
+        controlAPI.updateChannelStatus('telegram', {
+          enabled: true,
+          connected: true,
+          botCount: 1,
+          bots: [{ id: 'default', username: telegram.getBotUsername() }],
+        });
         spinner.succeed(`Telegram: @${telegram.getBotUsername()} (ready)`);
       } catch (error) {
         spinner.fail(`Telegram: ${error instanceof Error ? error.message : String(error)}`);
@@ -150,6 +191,14 @@ export async function runStart(options: StartOptions): Promise<void> {
           await discord.start();
           adapters.set(`discord:${botConfig.id}`, discord);
           const botUser = discord.getBotUser();
+          // Update Control API with bot status
+          const existingDiscordStatus = controlAPI['channelStatuses'].get('discord');
+          controlAPI.updateChannelStatus('discord', {
+            enabled: true,
+            connected: true,
+            botCount: (existingDiscordStatus?.bots?.length || 0) + 1,
+            bots: [...(existingDiscordStatus?.bots || []), { id: botConfig.id, username: botUser?.tag, agentId: botConfig.agentId }],
+          });
           spinner.succeed(`Discord: ${botUser?.tag || "unknown"} [${botConfig.id}] (ready)`);
         } catch (error) {
           spinner.fail(`Discord (${botConfig.id}): ${error instanceof Error ? error.message : String(error)}`);
@@ -164,6 +213,12 @@ export async function runStart(options: StartOptions): Promise<void> {
         await discord.start();
         adapters.set("discord", discord);
         const botUser = discord.getBotUser();
+        controlAPI.updateChannelStatus('discord', {
+          enabled: true,
+          connected: true,
+          botCount: 1,
+          bots: [{ id: 'default', username: botUser?.tag }],
+        });
         spinner.succeed(`Discord: ${botUser?.tag || "unknown"} (ready)`);
       } catch (error) {
         spinner.fail(`Discord: ${error instanceof Error ? error.message : String(error)}`);
@@ -192,6 +247,14 @@ export async function runStart(options: StartOptions): Promise<void> {
   const shutdown = async (signal: string) => {
     console.log(chalk.yellow(`\nReceived ${signal}. Shutting down...`));
 
+    // Stop Control API
+    try {
+      await controlAPI.stop();
+      console.log(chalk.gray("Stopped Control API"));
+    } catch (error) {
+      console.error("Error stopping Control API:", error);
+    }
+
     // Stop adapters
     for (const [name, adapter] of adapters) {
       try {
@@ -218,6 +281,9 @@ export async function runStart(options: StartOptions): Promise<void> {
     console.log(chalk.green("Goodbye!"));
     process.exit(0);
   };
+
+  // Set the shutdown handler for Control API
+  shutdownHandler = () => shutdown("API");
 
   process.on("SIGINT", () => shutdown("SIGINT"));
   process.on("SIGTERM", () => shutdown("SIGTERM"));

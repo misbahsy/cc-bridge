@@ -36,6 +36,10 @@ export type {
 export { MessageLogger } from "./core/logger.js";
 export type { LogEntry, LogOptions } from "./core/logger.js";
 
+// Control API
+export { ControlAPI, createControlAPI } from "./core/control-api.js";
+export type { ControlAPIOptions, BridgeStatus, ChannelStatus } from "./core/control-api.js";
+
 // Config
 export {
   loadConfig,
