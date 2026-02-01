@@ -4,10 +4,22 @@ Bridge messaging platforms (Telegram, Discord) to Claude Code sessions via the A
 
 ## Quick Start
 
-```bash
-# Install
-npm install -g cc-bridge
+### Install via Homebrew (recommended)
 
+```bash
+brew tap misbahsy/tap
+brew install cc-bridge
+```
+
+### Install via npm
+
+```bash
+npm install -g cc-bridge
+```
+
+### Run
+
+```bash
 # Setup
 ccb setup
 
@@ -121,13 +133,18 @@ A native macOS menu bar app for managing your bridge without the terminal.
 
 ### Installation
 
+**Via Homebrew (recommended):**
 ```bash
-# From the repository
+brew tap misbahsy/tap
+brew install --cask ccb
+```
+
+**From source:**
+```bash
 cd desktop
 npm install
 npm run tauri build
-
-# The .dmg will be in desktop/src-tauri/target/release/bundle/dmg/
+# The app will be in desktop/src-tauri/target/release/bundle/macos/
 ```
 
 ### Development
