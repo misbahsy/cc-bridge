@@ -1,6 +1,6 @@
 {
   "name": "cc-bridge",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Bridge messaging platforms to Claude Code sessions via the Agent SDK",
   "type": "module",
   "main": "dist/index.js",
