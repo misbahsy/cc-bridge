@@ -41,7 +41,7 @@ ccb start    # Start the bridge
 A native macOS menu bar app for managing your bridge without the terminal.
 
 ```bash
-brew install --cask ccb
+brew install --cask misbahsy/tap/ccb
 ```
 
 Features: menu bar status, one-click start/stop, pairing approvals, setup wizard, live logs.
