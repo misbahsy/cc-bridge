@@ -10,6 +10,7 @@ import {
 } from "@anthropic-ai/claude-agent-sdk";
 import { BridgeDatabase } from "../db/sqlite.js";
 import { Router } from "./router.js";
+import { getInstalledPlugins } from "./plugins.js";
 import type { AgentConfig, BridgeConfig, IncomingMessage, SessionInfo } from "./types.js";
 
 export interface SendMessageOptions {
@@ -160,7 +161,12 @@ export class SessionManager {
 
       // Pass agent's tool configuration if specified
       if (agent.tools && agent.tools.length > 0) {
-        queryOptions.allowedTools = agent.tools;
+        // tools is whitelist of what tools are available
+        (queryOptions as Record<string, unknown>).tools = agent.tools;
+      }
+      if (agent.allowedTools && agent.allowedTools.length > 0) {
+        // allowedTools are auto-allowed without prompting
+        queryOptions.allowedTools = agent.allowedTools;
       }
       if (agent.disallowedTools && agent.disallowedTools.length > 0) {
         queryOptions.disallowedTools = agent.disallowedTools;
@@ -171,12 +177,14 @@ export class SessionManager {
       if (agent.mcpServers && agent.mcpServers.length > 0) {
         const mcpServersRecord: Record<string, unknown> = {};
         for (const server of agent.mcpServers) {
-          if (server.type === "sse" && server.url) {
+          if ((server.type === "sse" || server.type === "http") && server.url) {
             mcpServersRecord[server.name] = {
-              type: "sse" as const,
+              type: server.type,
               url: server.url,
+              headers: server.headers,
             };
           } else {
+            // stdio type (default)
             mcpServersRecord[server.name] = {
               command: server.command || "",
               args: server.args || [],
@@ -184,8 +192,26 @@ export class SessionManager {
             };
           }
         }
-        // Cast to any to bypass SDK's strict typing - the actual shape is correct
         queryOptions.mcpServers = mcpServersRecord as Record<string, never>;
+      }
+
+      // Auto-load all installed plugins (matching Claude Code behavior)
+      const installedPlugins = getInstalledPlugins();
+      const agentPlugins = agent.plugins || [];
+      const allPlugins = [...agentPlugins, ...installedPlugins];
+      if (allPlugins.length > 0) {
+        console.log(`[CCB] ${allPlugins.length} plugins loaded`);
+        (queryOptions as Record<string, unknown>).plugins = allPlugins;
+      }
+
+      // Pass skills to preload if specified
+      if (agent.skills && agent.skills.length > 0) {
+        (queryOptions as Record<string, unknown>).skills = agent.skills;
+      }
+
+      // Pass custom subagents if specified
+      if (agent.subagents) {
+        (queryOptions as Record<string, unknown>).agents = agent.subagents;
       }
 
       // Use the query function with streaming
