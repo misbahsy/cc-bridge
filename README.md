@@ -2,9 +2,6 @@
 
 Bridge messaging platforms (Telegram, Discord) to Claude Code sessions via the Agent SDK.
 
-<img width="351" height="510" alt="image" src="https://github.com/user-attachments/assets/98a7b6f9-42e4-4748-a5fe-217decb6254f" />
-
-
 
 ## Installation
 
